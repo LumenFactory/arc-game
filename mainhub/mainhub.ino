@@ -93,13 +93,6 @@ void update_game()
     cursor_index = 1; // Move to the second LED
     direction = 1; // Change the direction to right
   }
-  // Increment the cursor, but reset to zero if it is greater than the number of leds (Circle Path)
-  /*cursor_index = cursor_index + 1;
-  if (cursor_index >= NUM_LEDS)
-  {
-    cursor_index = 0;
-  }
-*/
   Serial.print("Cursor Value: ");
   Serial.println(cursor_index);
 
