@@ -1,15 +1,19 @@
+/*
+This is the code for the brain of the project. If controls the game and is
+responsible for controlling lights etc.
+*/
 
 ///////////////////////////////////////
 // Hardware definitions
 ///////////////////////////////////////
+
 #define PIN_LED 13
 #define NUM_LEDS 176
-
-int curr_state = LOW;
 
 ///////////////////////////////////////
 // Timing Variables
 ///////////////////////////////////////
+
 uint32_t last_draw = 0;
 uint32_t wait_draw = 10;
 
@@ -18,9 +22,11 @@ uint32_t wait_update = 500; // This is the number of MS between frames. e.g. 500
 
 uint32_t last_buttoncheck = 0;
 uint32_t wait_buttoncheck = 50;
+
 ///////////////////////////////////////
 // Game Logic
 ///////////////////////////////////////
+
 bool is_button_pressed = false;
 
 int cursor_index = 0;
@@ -34,7 +40,7 @@ void setup()
 
   Serial.begin(115200);
   delay(100); // Put a small delay to ensure everything is setup properly
-  Serial.println("Starting...");
+  Serial.println("Starting ArcGame...");
 
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH); // Turn the built-in led on to show there is power
