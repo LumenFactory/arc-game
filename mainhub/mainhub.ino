@@ -18,7 +18,7 @@ uint32_t last_draw = 0;
 uint32_t wait_draw = 10;
 
 uint32_t last_update = 0;
-uint32_t wait_update = 500; // This is the number of MS between frames. e.g. 500 = 2 fps
+uint32_t wait_update = 100; // This is the number of MS between frames. e.g. 500 = 2 fps
 
 uint32_t last_buttoncheck = 0;
 uint32_t wait_buttoncheck = 50;
@@ -33,14 +33,18 @@ int cursor_index = 0;
 int cursor_index_max = NUM_LEDS;
 
 int target_index = NUM_LEDS / 2;
-int target_width = 5;
+int target_width = 10;
+int min_index = target_index - target_width;
+int max_index = target_index + target_width;
+int direction = 1;
 
 void setup()
 {
 
   Serial.begin(115200);
-  delay(100); // Put a small delay to ensure everything is setup properly
+  delay(1000); // Put a small delay to ensure everything is setup properly
   Serial.println("Starting ArcGame...");
+  delay(1000);
 
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH); // Turn the built-in led on to show there is power
@@ -48,6 +52,7 @@ void setup()
   // Additional Setup steps go here
 
   Serial.println("Init Complete...");
+  delay(1000);
 }
 
 void check_button_state()
@@ -78,17 +83,28 @@ void draw()
 
 void update_game()
 {
+  cursor_index += direction; // Move to the next LED based on the direction
 
+  // Check if the LED reached the end of the strip
+  if (cursor_index >= NUM_LEDS) {
+    cursor_index = NUM_LEDS - 2; // Move to the second-to-last LED
+    direction = -1; // Change the direction to left
+  } else if (cursor_index < 0) {
+    cursor_index = 1; // Move to the second LED
+    direction = 1; // Change the direction to right
+  }
   // Increment the cursor, but reset to zero if it is greater than the number of leds (Circle Path)
-  cursor_index = cursor_index + 1;
+  /*cursor_index = cursor_index + 1;
   if (cursor_index >= NUM_LEDS)
   {
     cursor_index = 0;
   }
-
+*/
   Serial.print("Cursor Value: ");
   Serial.println(cursor_index);
+
 }
+
 
 void loop()
 {
@@ -114,6 +130,28 @@ void loop()
     draw();
     last_draw = millis();
   }
+  if (is_button_pressed) {
+    if (cursor_index >= min_index && cursor_index <= max_index) {
+        // Game won!
+      Serial.println("Game won!");
+      delay(1000);
+      cursor_index = 0;
+      target_width -= 1;
+      wait_update = wait_update/2;
+      Serial.print("Next level! Speed: ");
+      Serial.println(wait_update);
+      Serial.print("Target Range: ");
+      Serial.println(target_width);
 
-  //  delay(10);
+      delay(1000);
+      } else {
+        // Game lost!
+      Serial.println("Game lost! Back to level 1"); 
+      delay(1000);
+      cursor_index = 0;
+      wait_update = 100;
+      target_width = 10;
+      }
+    }
+  
 }
