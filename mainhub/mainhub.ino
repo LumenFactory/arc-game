@@ -14,7 +14,6 @@ responsible for controlling lights etc.
 
 
 #define DATA_PIN 5
-#define CLOCK_PIN 13
 
 
 ///////////////////////////////////////
@@ -141,6 +140,7 @@ void game_logic()
 {   if (is_button_pressed) {
     if (cursor_index >= min_index && cursor_index <= max_index) {
         // Game won!
+      win_animation(2);
       Serial.println("Game won!");
       delay(1000);
       // Update the game logic
@@ -160,20 +160,56 @@ void game_logic()
         Serial.print(", Color: 0x");
         Serial.println(rainbowColors[currentLevel], HEX);
 
+      //Run win animation
+
       delay(1000);
       } 
       //LOSS CASE
       else {
         // Game lost!
       Serial.println("Game lost! Back to level 1"); 
+
+      //Run loss animation
+      loss_animation(2);
+
       delay(1000);
       //Update game logic
       cursor_index = 0;
       wait_update = 100;
       currentLevel = 0;
+
+
       }
     }
 }
+
+void win_animation(int numFlashes)
+{
+  for (int i = 0; i < numFlashes; i++) {
+    fill_solid(leds, NUM_LEDS, 0xFFFFFF); // Set all LEDs to white
+    FastLED.show();
+    delay(200);
+
+    fill_solid(leds, NUM_LEDS, 0x000000); // Turn off all LEDs
+    FastLED.show();
+    delay(200);
+  }
+}
+
+void loss_animation(int numFlashes)
+{
+  for (int i = 0; i < numFlashes; i++) {
+    fill_solid(leds, NUM_LEDS, 0xFF0000); // Set all LEDs to white
+    FastLED.show();
+    delay(200);
+
+    fill_solid(leds, NUM_LEDS, 0x000000); // Set all LEDs to white
+    FastLED.show();
+    delay(200);
+
+  }
+}
+
 void loop()
 {
   // put your main code here, to run repeatedly:
