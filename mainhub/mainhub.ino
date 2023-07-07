@@ -29,6 +29,21 @@ uint32_t wait_update = 200; // This is the number of MS between frames. e.g. 500
 uint32_t last_buttoncheck = 0;
 uint32_t wait_buttoncheck = 50;
 
+
+///////////////////////////////////////
+// State Machine
+///////////////////////////////////////
+
+#define STATE_STARTUP 0;
+#define STATE_IDLE 1;
+#define STATE_INGAME 2;
+#define STATE_WON 3;
+#define STATE_LOST 4;
+#define STATE_COMPLETED 5;
+
+int game_state = STATE_STARTUP;
+uint32_t state_start_at = millis();
+
 ///////////////////////////////////////
 // Game Logic
 ///////////////////////////////////////
@@ -56,8 +71,20 @@ uint32_t rainbowColors[] = {
   0x8B00FF  // Violet
 };
 
+uint32_t last_blink = 0;
+uint32_t wait_blink = 500;
+int blinkMode = 1; // 1 = On; 0 = Off;
+
+uint32_t last_fastblink = 0;
+uint32_t wait_fastblink = 20;
+int fastBlinkMode = 1; // 1 = On; 0 = Off;
+
 //Define the array of LEDs
 CRGB leds[NUM_LEDS];
+
+bool timeGate(uint32_t last, uint32_t wait){
+  return last+wait < millis();
+}
 
 void setup()
 {
@@ -88,9 +115,11 @@ void check_button_state()
     int incomingByte = Serial.read();
     is_button_pressed = !is_button_pressed; // Toggle the button pressed
   }
+
+  setDebugLed();
 }
 
-void draw()
+void setDebugLed()
 {
 
   // Turn the built-in LED off when the button is pressed
@@ -101,6 +130,71 @@ void draw()
   else
   {
     digitalWrite(PIN_LED, HIGH);
+  }
+}
+
+void run_state_machine() {
+  if (STATE_STARTUP == game_state){
+    state_startup();
+  }else if (STATE_IDLE = game_state) {
+    state_startup();
+  }else if (STATE_INGAME = game_state) {
+    //TODO: Implement
+  }else if (STATE_WON = game_state) {
+    //TODO: Implement
+  }else if (STATE_LOST = game_state) {
+    //TODO: Implement
+  }else if (STATE_COMPLETED = game_state) {
+    //TODO: Implement
+  }else{
+    // If this is reached then an error has occured.
+    Serial.print("CriticalError: Unknown GameState Reached(");
+    Serial.print(game_state);
+    Serial.println(")");
+
+    // Wait forever. This makes sure the serial monitor can be read -- Board can be reset when ready to continue. 
+    delay(9999999999999); // TODO: Remove 
+  }
+}
+
+//This code is executed once, when first entering the state. It can be used to reset variables 
+void set_state_startup(){
+  Serial.println("EnteringState: Startup")
+}
+
+//This code is executed every loop while the state is active. It can be used to control animations specific to that state
+void state_startup(){
+  
+  fill_solid(leds, NUM_LEDS, CHSV(35, 255, 255*fastBlinkMode));
+
+  if (timeGate(state_start_at, 5000)) {
+    set_state_idle();
+  }
+}
+
+void set_state_idle(){
+  Serial.println("EnteringState: Idle")
+  currentLevel = 0; // Reset the level so its starts at zero
+}
+
+void state_idle(){
+
+  // BlinkMode in this case is updated globally for all states. No need to update it here.
+  fill_solid(leds, NUM_LEDS, CHSV(35, 255, 255*blinkMode));
+
+  if (is_button_pressed) {
+    // TODO: Set State to InGame
+  }
+}
+
+// This function updates global variables at 
+void update_variables() {
+  if (timeGate(last_blink, wait_blink)) {
+    blinkMode = 1-blinkMode;
+  }
+
+    if (timeGate(last_fastblink, wait_fblink)) {
+    blinkMode = 1-blinkMode;
   }
 }
 
@@ -221,18 +315,15 @@ void loop()
     last_buttoncheck = millis();
   }
 
-  // Update the GameState every N Milliseconds
-  if (last_update + wait_update < millis())
-  {
-    update_game();
-    last_update = millis();
-  }
+  // TODO: Run this as 100fps or lower to save power
+  run_state_machine();
+  
+  // // Update the GameState every N Milliseconds
+  // if (last_update + wait_update < millis())
+  // {
+  //   update_game();
+  //   last_update = millis();
+  // }
 
-  // Update the GameState every N Milliseconds
-  if (last_draw + wait_draw < millis())
-  {
-    draw();
-    last_draw = millis();
-  }
-  game_logic();
+  // game_logic();
 }
