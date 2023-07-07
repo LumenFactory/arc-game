@@ -56,6 +56,16 @@ uint32_t rainbowColors[] = {
   0x8B00FF  // Violet
 };
 
+uint32_t game_speeds[] = {
+  200,
+  100,
+  50,
+  25,
+  20,
+  10,
+  5
+};
+
 //Define the array of LEDs
 CRGB leds[NUM_LEDS];
 
@@ -64,8 +74,6 @@ void setup()
   
   Serial.begin(115200);
   delay(1000); // Put a small delay to ensure everything is setup properly
-  Serial.println("Starting ArcGame...");
-  delay(1000);
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   FastLED.setBrightness(25);
 
@@ -80,7 +88,6 @@ void setup()
 
 void check_button_state()
 {
-
   // Create a fake button press for testing. This looks for data in the SerialMonitor then simulates
   // a button press
   if (Serial.available() > 0)
@@ -116,18 +123,18 @@ void update_game()
     cursor_index = 1; // Move to the second LED
     direction = 1; // Change the direction to right
   }
-  //LEDs
-  //Light the cursor
+  
+  ////////////////////////////////////
+  //Draw the LEDs
+  ////////////////////////////////////
+  
+  //Light the cursor and target range
   leds[cursor_index] = rainbowColors[currentLevel];
+  leds[min_index] = CRGB::White;
+  leds[max_index] = CRGB::White;
   FastLED.show();
   // Now turn the LED off, then pause
   leds[cursor_index] = CRGB::Black;
-  FastLED.show();
-
-   //Light the target range
-  leds[min_index] = CRGB::White;
-  FastLED.show();
-  leds[max_index] = CRGB::White;
   FastLED.show();
   
   Serial.print("Cursor Value: ");
@@ -136,20 +143,22 @@ void update_game()
 }
 
 void game_logic()
-//WIN CASE
+
+    //RUN LEVEL WIN//
+
 {   if (is_button_pressed) {
-    if (cursor_index >= min_index && cursor_index <= max_index) {
+    if (cursor_index >= min_index && cursor_index <= max_index && currentLevel < 6) {
         // Game won!
-      win_animation(2);
-      Serial.println("Game won!");
+      level_win_animation(2);
+      Serial.println("Level won!");
       delay(1000);
       // Update the game logic
       cursor_index = 0;
-      wait_update = wait_update/2;
       currentLevel++; 
       if (currentLevel >= numLevels) {
           currentLevel = 0; // Wrap around to the first level if all levels are completed
         }
+      wait_update = game_speeds[currentLevel];
       // Print message
       Serial.print("Next level! Speed: ");
         Serial.println(wait_update);
@@ -160,11 +169,27 @@ void game_logic()
         Serial.print(", Color: 0x");
         Serial.println(rainbowColors[currentLevel], HEX);
 
-      //Run win animation
-
       delay(1000);
       } 
-      //LOSS CASE
+
+      //RUN GAME WIN//
+
+      else if (cursor_index >= min_index && cursor_index <= max_index && currentLevel > 5){
+              Serial.println("Game won! You did it!"); 
+
+      //Run  animation
+      game_win_animation(3);
+
+      delay(2000);
+      //Update game logic
+      cursor_index = 0;
+      currentLevel = 0;
+      wait_update = game_speeds[currentLevel];
+
+      }
+
+      //RUN GAME LOSS//
+
       else {
         // Game lost!
       Serial.println("Game lost! Back to level 1"); 
@@ -175,18 +200,30 @@ void game_logic()
       delay(1000);
       //Update game logic
       cursor_index = 0;
-      wait_update = 100;
       currentLevel = 0;
-
+      wait_update = game_speeds[currentLevel];
 
       }
     }
 }
 
-void win_animation(int numFlashes)
+void level_win_animation(int numFlashes)
 {
   for (int i = 0; i < numFlashes; i++) {
     fill_solid(leds, NUM_LEDS, 0xFFFFFF); // Set all LEDs to white
+    FastLED.show();
+    delay(200);
+
+    fill_solid(leds, NUM_LEDS, 0x000000); // Turn off all LEDs
+    FastLED.show();
+    delay(200);
+  }
+}
+
+void game_win_animation(int numFlashes)
+{
+  for (int i = 0; i < numFlashes; i++) {
+    fill_solid(leds, NUM_LEDS, 0x00FF00); // Set all LEDs to white
     FastLED.show();
     delay(200);
 
